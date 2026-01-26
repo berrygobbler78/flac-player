@@ -30,7 +30,7 @@ import java.nio.Buffer;
 
 public class FileUtils implements PCMProcessor {
 
-    public String directoryPath = "C:\\Users\\wgari\\Music\\The Archive";
+    public String directoryPath;
 
     private WavWriter wav;
 
@@ -94,6 +94,8 @@ public class FileUtils implements PCMProcessor {
             return null;
         }
     }
+
+    public void saveObject(Object obj, File file) {}
 
     public BufferedImage getAlbumImage(File file, int w, int h) {
         try {
@@ -164,8 +166,6 @@ public class FileUtils implements PCMProcessor {
         } catch (IOException e) {
             System.err.println("Some");
         }
-        // TODO Auto-generated catch block
-        // TODO Auto-generated catch block
     }
 
     @Override

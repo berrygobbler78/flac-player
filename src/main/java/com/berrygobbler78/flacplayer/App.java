@@ -1,6 +1,6 @@
 package com.berrygobbler78.flacplayer;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.Objects;
 
 import javafx.application.Application;
@@ -18,13 +18,40 @@ public class App extends Application {
 
     public static FileUtils fileUtils;
     public static MusicPlayer musicPlayer;
+    public static UserData userData;
+
+    private static File userDataFile = new File("src/main/resources/com/berrygobbler78/flacplayer/cache/UserData.ser");
 
     private static Stage primaryStage;
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) throws IOException, ClassNotFoundException {
         fileUtils = new FileUtils();
         musicPlayer = new MusicPlayer();
+
+        FileInputStream fis;
+        ObjectInputStream ois;
+        try {
+            fis = new FileInputStream(userDataFile);
+            ois = new ObjectInputStream(fis);
+            userData = (UserData) ois.readObject();
+
+            fis.close();
+            ois.close();
+
+        } catch (IOException e) {
+            userData = new UserData();
+            File selectedDirectory = fileUtils.directoryChooser(new Stage(), "Pick a Directory", "C:");
+            App.userData.setRootDirectoryPath(selectedDirectory.getAbsolutePath());
+
+            FileOutputStream fos = new FileOutputStream(userDataFile);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(userData);
+            oos.close();
+            fos.close();
+
+        }
+
 
         primaryStage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("revised.fxml"));

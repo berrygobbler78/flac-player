@@ -166,7 +166,7 @@ public class Controller implements  Initializable {
 
     @FXML
     private void forceGenerateCache() {
-        for (File artistFolder : Objects.requireNonNull(new File(fileUtils.directoryPath).listFiles(folderFilter))) {
+        for (File artistFolder : Objects.requireNonNull(new File(App.userData.getRootDirectoryPath()).listFiles(folderFilter))) {
             for (File albumFolder : Objects.requireNonNull(artistFolder.listFiles(folderFilter))) {
                 try {
                     File albumArtImage = new File(albumFolder, "albumArtImage.png");
@@ -218,7 +218,7 @@ public class Controller implements  Initializable {
     }
 
     private void generateCache() {
-        for (File artistFolder : Objects.requireNonNull(new File(fileUtils.directoryPath).listFiles(folderFilter))) {
+        for (File artistFolder : Objects.requireNonNull(new File(App.userData.getRootDirectoryPath()).listFiles(folderFilter))) {
             for (File albumFolder : Objects.requireNonNull(artistFolder.listFiles(folderFilter))) {
                 if (albumFolder.listFiles(albumArt).length == 0) {
                     try {
@@ -245,9 +245,9 @@ public class Controller implements  Initializable {
     @FXML
     private void refreshTreeView() {
         generateCache();
-        TreeItem<String> rootItem = new TreeItem<>(new File(fileUtils.directoryPath).getName(), new ImageView(fileUtils.getFileIcon(new File(fileUtils.directoryPath))));
+        TreeItem<String> rootItem = new TreeItem<>(new File(App.userData.getRootDirectoryPath()).getName(), new ImageView(fileUtils.getFileIcon(new File(App.userData.getRootDirectoryPath()))));
 
-        for (File artistFile : Objects.requireNonNull(new File(fileUtils.directoryPath).listFiles(folderFilter))) {
+        for (File artistFile : Objects.requireNonNull(new File(App.userData.getRootDirectoryPath()).listFiles(folderFilter))) {
             TreeItem<String> artistItem = new TreeItem<>(artistFile.getName(), new ImageView(
                     new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/cd.png")))
             ));
@@ -284,7 +284,7 @@ public class Controller implements  Initializable {
                 operationAvailable = false;
             }
         }
-        File albumFile = new File(fileUtils.directoryPath + "\\" + selectedItem.getParent().getValue() + "\\" + selectedItem.getValue());
+        File albumFile = new File(App.userData.getRootDirectoryPath() + "\\" + selectedItem.getParent().getValue() + "\\" + selectedItem.getValue());
 
         if (new File(albumFile.getParent()).getName().equals(treeView.getRoot().getValue()) ) {
 
@@ -453,7 +453,8 @@ public class Controller implements  Initializable {
     }
 
     public void pickDirectory() {
-        File selectedDirectory = fileUtils.directoryChooser(new Stage(), "Pick a Directory", new File(fileUtils.directoryPath).getParent());
+        File selectedDirectory = fileUtils.directoryChooser(new Stage(), "Pick a Directory", new File(App.userData.getRootDirectoryPath()).getParent());
+        App.userData.setRootDirectoryPath(selectedDirectory.getAbsolutePath());
         if (selectedDirectory != null) {
             fileUtils.changeDirectoryPath(selectedDirectory.getAbsolutePath());
             refreshTreeView();
