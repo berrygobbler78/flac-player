@@ -1,0 +1,23 @@
+.tree-cell:selected {
+    -fx-font-weight: bold ;
+    -fx-background-color: #4b783b;
+    -fx-text-fill: #FFFFFF;
+}
+
+.tree-cell.cell:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+.tree-cell:visited {
+    -fx-background-color: #FFFFFF;
+}
+
+.tree-cell {
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #121212;
+}
+
+.scroll-bar {
+    -fx-background-color: #121212;
+}

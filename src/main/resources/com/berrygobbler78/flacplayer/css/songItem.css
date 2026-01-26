@@ -1,0 +1,18 @@
+
+
+#playIV {
+    -fx-opacity: 0;
+}
+
+#stackPane:hover > #playIV {
+    -fx-opacity: 100;
+}
+
+#stackPane:hover > #songNumberLabel {
+    -fx-opacity: 0;
+}
+
+#stackPane:pressed > #playIV {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
