@@ -4,11 +4,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import com.jfoenix.controls.JFXSlider;
 import javafx.beans.binding.Bindings;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -42,7 +42,7 @@ public class Controller implements  Initializable {
     @FXML
     public  BorderPane topBorderPane;
     @FXML
-    private TreeView treeView;
+    private TreeView<String> treeView;
     @FXML
     private ImageView currentPlayPauseImageView, repeatImageView, shuffleImageView, previousImageView, nextImageView;
     @FXML
@@ -51,6 +51,10 @@ public class Controller implements  Initializable {
     private TabPane previewTabPane;
     @FXML
     private Label totTrackTime, currentTrackTime;
+    @FXML
+    private TextField searchBar;
+
+    private TreeView<String> defaultTreeView = new TreeView<>();
 
     public static FileUtils fileUtils;
     public static MusicPlayer musicPlayer;
@@ -74,6 +78,9 @@ public class Controller implements  Initializable {
     private double y;
 
     private final FileFilter folderFilter = File::isDirectory;
+
+    private ArrayList<TreeItem<String>> supaList = new ArrayList<>();
+    
 
     private final FileFilter albumArt = new FileFilter() {
         public boolean accept(File f)
@@ -122,6 +129,23 @@ public class Controller implements  Initializable {
 //        });
     }
 
+    @FXML
+    private void search() {
+        treeView.getRoot().getChildren().clear();
+        treeView.getRoot().getChildren().addAll(searchList(searchBar.getText(), defaultTreeView));
+    }
+
+    private List<TreeItem<String>> searchList(String search, TreeView<String> treeView) {
+        List<TreeItem<String>> foundItems = new ArrayList<>();
+        for(int i = 0; i < supaList.size(); i++){
+            if(supaList.get(i).getValue().toLowerCase().contains(search.toLowerCase())){
+                foundItems.add(supaList.get(i));
+            }
+        }
+
+        return foundItems;
+    }
+
     public void setSongProgressSliderPos(int currentSongDuration, int totalSongDuration) {
         songProgressSlider.setValue((double) currentSongDuration /totalSongDuration * 100 + 0.00001);
     }
@@ -143,6 +167,8 @@ public class Controller implements  Initializable {
 
             }
         }
+
+
     }
 
     public void setTotTrackTime(int sec) {
@@ -205,25 +231,29 @@ public class Controller implements  Initializable {
             TreeItem<String> artistItem = new TreeItem<>(artistFile.getName(), new ImageView(
                     new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/cd.png")))
             ));
+            System.out.println(artistItem.getValue());
             for (File albumFile : Objects.requireNonNull(artistFile.listFiles(folderFilter))) {
-                TreeItem<String> albumItem;
-                try {
-                    File albumArtIcon = new File(albumFile, "albumArtIcon.png");
-                    albumItem = new TreeItem<>(albumFile.getName(), new ImageView(new Image(albumArtIcon.toURI().toString())));
-                } catch (Exception e) {
-                    String tempName = albumFile.getName().replaceAll("#00F3", "?");
-                    albumItem = new TreeItem<>(tempName, new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/warning.png")))));
+                TreeItem<String> albumItem = null;
+                for(File f : albumFile.listFiles()){
+                    try{
+                        File albumArtIcon = new File(albumFile, "albumArtIcon.png");
+                        String tempName = albumFile.getName().replaceAll("#00F3", "?");
+                        albumItem = new TreeItem<String>(tempName, new ImageView(new Image(albumArtIcon.toURI().toString())));
+                    } catch(Exception e) {
+                        String tempName = albumFile.getName().replaceAll("#00F3", "?");
+                        albumItem = new TreeItem<>(tempName, new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/warning.png")))));
+                    }
                 }
 
                 artistItem.getChildren().add(albumItem);
 
             }
-
+            supaList.add(artistItem);
             rootItem.getChildren().add(artistItem);
 
         }
-        treeView.setRoot(rootItem);
 
+        treeView.setRoot(rootItem);
         treeView.setShowRoot(false);
         treeView.refresh();
     }
