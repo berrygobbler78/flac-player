@@ -1,4 +1,4 @@
-## Introduction
+## Introduction:
 Welcome to my yet-to-be named flac player.
 The intention for this application is to be able to rip flac files from your cd collection and play them natively.
 
@@ -11,18 +11,19 @@ The intention for this application is to be able to rip flac files from your cd 
 4. When you add more songs, you should use the refresh button the left side, and it should generate images if available.
 5. Enjoy.
 
-### TODO
-- [ ] Shuffling
+## TODO:
+### Incomplete 
 - [ ] Color picker for theme
 - [ ] In depth song settings (Volume, playback speed, pitch?)
 - [ ] Playlists
 - [ ] Search feature
 - [ ] Fix the window
 - [ ] Make everything resize nicely
+- [ ] Show songs in queue
 
 ### Completed  ✓
-- [x] Ain't anything here 
+- [x] Shuffling
 
-## Credits
+## Credits:
 - I am using some Icon8 icons for my buttons, they're great.
 
