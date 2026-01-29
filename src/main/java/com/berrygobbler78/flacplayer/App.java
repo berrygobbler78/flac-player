@@ -3,13 +3,19 @@ package com.berrygobbler78.flacplayer;
 import java.io.*;
 import java.util.Objects;
 
+import com.pixelduke.window.ThemeWindowManager;
+import com.pixelduke.window.ThemeWindowManagerFactory;
+import com.pixelduke.window.Win11ThemeWindowManager;
+import com.pixelduke.window.ThemeWindowManager.*;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 /**
  * JavaFX App
@@ -26,6 +32,9 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException, ClassNotFoundException {
+
+        Win11ThemeWindowManager themeWindowManager = (Win11ThemeWindowManager) ThemeWindowManagerFactory.create();
+
         deleteTempFile();
 
         fileUtils = new FileUtils();
@@ -70,17 +79,18 @@ public class App extends Application {
 
         }
 
-
         primaryStage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("revised.fxml"));
 
         Scene scene = new Scene(fxmlLoader.load());
         scene.getStylesheets().add(Objects.requireNonNull(App.class.getResource("css/styles.css")).toExternalForm());
+
         stage.setScene(scene);
-        stage.initStyle(StageStyle.DECORATED);
         stage.show();
 
-
+        themeWindowManager.setWindowFrameColor(primaryStage, Color.web("#121212"));
+//        themeWindowManager.se
+        themeWindowManager.setDarkModeForWindowFrame(primaryStage, true);
 
         musicPlayer.setController(fxmlLoader.getController());
     }
