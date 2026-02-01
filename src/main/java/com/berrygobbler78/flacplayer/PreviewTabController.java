@@ -35,18 +35,9 @@ public class PreviewTabController implements Initializable {
     private Controller controller;
     private MusicPlayer musicPlayer;
 
-    private final Image playImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/play.png")));
-    private final Image pauseImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/pause.png")));
 
     private double font;
     private final int error = 5;
-
-    private final FileFilter flacFilter = new FileFilter() {
-        public boolean accept(File f)
-        {
-            return f.getName().endsWith("flac");
-        }
-    };
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -79,9 +70,9 @@ public class PreviewTabController implements Initializable {
 
     public void setPlayPauseImageViewPaused(boolean paused) {
         if(paused) {
-            playPauseImageView.setImage(playImage);
+            playPauseImageView.setImage(Images.getImage(Images.ImageName.PLAY));
         } else  {
-            playPauseImageView.setImage(pauseImage);
+            playPauseImageView.setImage(Images.getImage(Images.ImageName.PAUSE));
         }
     }
 
@@ -90,7 +81,7 @@ public class PreviewTabController implements Initializable {
         try {
             int nodesLength = 0;
 
-            for(File fileToCheck : Objects.requireNonNull(file.listFiles(flacFilter))){
+            for(File fileToCheck : Objects.requireNonNull(file.listFiles(fileUtils.flacFilter))){
                 nodesLength ++;
             }
 
@@ -128,14 +119,6 @@ public class PreviewTabController implements Initializable {
 
     public String getType() {
         return type;
-    }
-
-    public void setPlayPauseImageView(boolean paused) {
-        if(paused) {
-            playPauseImageView.setImage(playImage);
-        } else  {
-            playPauseImageView.setImage(pauseImage);
-        }
     }
 
 }
