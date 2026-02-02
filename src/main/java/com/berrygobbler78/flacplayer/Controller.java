@@ -1,26 +1,34 @@
 package com.berrygobbler78.flacplayer;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 
 import com.jfoenix.controls.JFXSlider;
+import com.pixelduke.window.ThemeWindowManagerFactory;
+import com.pixelduke.window.Win11ThemeWindowManager;
 import javafx.beans.binding.Bindings;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import javax.imageio.ImageIO;
 
@@ -53,12 +61,15 @@ public class Controller implements  Initializable {
     private TextField searchBar;
 
     private TreeItem<String> defaultRoot = null;
-    private ArrayList<TreeItem<String>> supaList = new ArrayList<>();
-    private HashMap<TreeItem<String>, String> artistAlbumItemMap = new HashMap<>();
-    private HashMap<TreeItem<String>, String> songItemMap = new HashMap<>();
 
-    public static FileUtils fileUtils;
-    public static MusicPlayer musicPlayer;
+    private HashMap<TreeItem<String>, String> artistItemMap = new HashMap<>();
+    private HashMap<TreeItem<String>, String> albumItemMap = new HashMap<>();
+    private HashMap<TreeItem<String>, String> songItemMap = new HashMap<>();
+    private HashMap<TreeItem<String>, UserData.Playlist> playlistItemMap = new HashMap<>();
+
+    public static FileUtils fileUtils = App.fileUtils;
+    public static MusicPlayer musicPlayer = App.musicPlayer;
+    public static UserData userData = App.userData;
 
     private final Image repeatUnselectedImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/repeat_unselected.png")));
     private final Image repeatSelectedImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/berrygobbler78/flacplayer/graphics/repeat_selected.png")));
@@ -75,14 +86,12 @@ public class Controller implements  Initializable {
     private double x;
     private double y;
 
+    private Stage primaryStage = App.getPrimaryStage();
+
     boolean paused = true;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        fileUtils = App.fileUtils;
-        musicPlayer = App.musicPlayer;
-
         previewTabPane.setTabDragPolicy(TabPane.TabDragPolicy.REORDER);
         previewTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         previewTabPane.setTabMinWidth(125);
@@ -101,9 +110,8 @@ public class Controller implements  Initializable {
             }
         });
 
+//        Hides JFX thumb
         songProgressSlider.setValueFactory(arg0 -> Bindings.createStringBinding(() -> "", songProgressSlider.valueProperty()));
-
-
         songProgressSlider.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::updateSongPos);
 
 //        volumeSlider.valueProperty().addListener((ObservableValue<? extends Number> arg0, Number arg1, Number arg2) -> {
@@ -120,7 +128,11 @@ public class Controller implements  Initializable {
             treeView.getRoot().getChildren().addAll(searchList(searchBar.getText()));
             treeView.getSelectionModel().selectFirst();
         } catch (Exception e) {
-            treeView.getRoot().getChildren().addAll(supaList);
+            TreeItem<String> root = new TreeItem<>("");
+            for(TreeItem<String> item : artistItemMap.keySet()){
+                root.getChildren().add(item);
+            }
+            treeView.setRoot(root);
         }
     }
 
@@ -128,21 +140,34 @@ public class Controller implements  Initializable {
         List<TreeItem<String>> foundItems = new ArrayList<>();
 
         if(search.isEmpty()){
-            TreeItem<String> root = defaultRoot;
-            treeView.setRoot(root);
             return null;
         }
 
-        for(TreeItem<String> item : artistAlbumItemMap.keySet()){
+        for(TreeItem<String> item : artistItemMap.keySet()){
             if(item.getValue().toLowerCase().contains(search.toLowerCase())){
-                TreeItem<String> artistItem = new TreeItem<>(item.getValue(), item.getGraphic());
-                artistItem.getChildren().addAll(item.getChildren());
-                foundItems.add(artistItem);
+                foundItems.add(item);
+            }
+        }
+
+        for(TreeItem<String> item : albumItemMap.keySet()){
+            if(item.getValue().toLowerCase().contains(search.toLowerCase())){
+                foundItems.add(item);
+            }
+        }
+
+        for(TreeItem<String> item : songItemMap.keySet()){
+            if(item.getValue().toLowerCase().contains(search.toLowerCase())){
+                foundItems.add(item);
+            }
+        }
+
+        for(TreeItem<String> item : playlistItemMap.keySet()){
+            if(item.getValue().toLowerCase().contains(search.toLowerCase())){
+                foundItems.add(item);
             }
         }
 
         return foundItems;
-
     }
 
     public void setSongProgressSliderPos(int currentSongDuration, int totalSongDuration) {
@@ -222,9 +247,10 @@ public class Controller implements  Initializable {
     }
 
     @FXML
-    private void refreshTreeView() {
+    public void refreshTreeView() {
         generateCache();
-        artistAlbumItemMap.clear();
+        artistItemMap.clear();
+        albumItemMap.clear();
         songItemMap.clear();
 
         TreeItem<String> rootItem = new TreeItem<>(new File(App.userData.getRootDirectoryPath()).getName(), new ImageView(fileUtils.getFileIcon(new File(App.userData.getRootDirectoryPath()))));
@@ -233,8 +259,8 @@ public class Controller implements  Initializable {
             TreeItem<String> artistItem = new TreeItem<>(artistFile.getName(), new ImageView(Images.getImage(Images.ImageName.CD)));
             for (File albumFile : Objects.requireNonNull(artistFile.listFiles(fileUtils.folderFilter))) {
                 TreeItem<String> albumItem = null;
+                File albumArtIcon = new File(albumFile, "albumArtIcon.png");
                 try{
-                    File albumArtIcon = new File(albumFile, "albumArtIcon.png");
                     String tempName = albumFile.getName().replaceAll("#00F3", "?");
                     albumItem = new TreeItem<String>(tempName, new ImageView(new Image(albumArtIcon.toURI().toString())));
                 } catch(Exception e) {
@@ -244,35 +270,97 @@ public class Controller implements  Initializable {
                 int songNum = 1;
                 for(File songFile : Objects.requireNonNull(albumFile.listFiles(fileUtils.flacFilter))) {
                     TreeItem<String> songItem = null;
-                    songItem = new TreeItem<>(songNum + ". " + fileUtils.getSongTitle(songFile), new ImageView(Images.getImage(Images.ImageName.SONG)));
+                    songItem = new TreeItem<>(songNum + ". " + fileUtils.getSongTitle(songFile), new ImageView(new Image(albumArtIcon.toURI().toString())));
                     songNum++;
-
-                    albumItem.getChildren().add(songItem);
                     songItemMap.put(songItem, songFile.getAbsolutePath());
                 }
 
-                artistAlbumItemMap.put(albumItem, albumFile.getAbsolutePath());
+                albumItemMap.put(albumItem, albumFile.getAbsolutePath());
                 artistItem.getChildren().add(albumItem);
 
             }
-            supaList.add(artistItem);
-            artistAlbumItemMap.put(artistItem, artistFile.getAbsolutePath());
+            artistItemMap.put(artistItem, artistFile.getAbsolutePath());
             rootItem.getChildren().add(artistItem);
 
         }
 
-        defaultRoot = rootItem;
+        TreeItem<String> userItem = new TreeItem<>("- User -", new ImageView(Images.getImage(Images.ImageName.CD)));
+        if(userData.getPlaylists() != null || userData.getPlaylists().isEmpty()) {
+            for(UserData.Playlist playlist : Objects.requireNonNull(App.userData.getPlaylists())) {
+                TreeItem<String> playlistItem = new TreeItem<>(playlist.getName());
+
+                playlistItemMap.put(playlistItem, playlist);
+                userItem.getChildren().add(playlistItem);
+            }
+        }
+        rootItem.getChildren().add(userItem);
+
 
         treeView.setRoot(rootItem);
         treeView.setShowRoot(false);
         treeView.refresh();
+
+//        rootItem.getChildren().sort(Comparator.comparing(t->t.getValue().length()));
+    }
+
+    @FXML
+    private void newPlaylist() {
+        Win11ThemeWindowManager themeWindowManager = (Win11ThemeWindowManager) ThemeWindowManagerFactory.create();
+        final Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(primaryStage);
+
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("newPlaylistWindow.fxml"));
+        try {
+            AnchorPane playlistPane = loader.load();
+            PopupWindowsController controller = loader.getController();
+            controller.setValues(dialog, this);
+
+            Scene dialogScene = new Scene(playlistPane, 300, 100);
+            dialogScene.setFill(Color.TRANSPARENT);
+
+            dialog.setTitle("Create Playlist");
+            dialog.initStyle(StageStyle.UNIFIED);
+            dialog.setResizable(false);
+            dialog.setScene(dialogScene);
+            dialog.show();
+
+            themeWindowManager.setDarkModeForWindowFrame(dialog, true);
+            themeWindowManager.setWindowBackdrop(dialog, Win11ThemeWindowManager.Backdrop.ACRYLIC);
+        } catch (Exception e) {
+            System.err.println("Error opening playlist window: " + e.getMessage());
+        }
     }
 
     @FXML
     private void selectAlbum() {
         TreeItem<String> selectedItem = (TreeItem<String>) treeView.getSelectionModel().getSelectedItem();
+        if(selectedItem.getParent().getValue().equals("- User -")) {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("previewTab.fxml"));
+            try {
+                Node previewNode = loader.load();
+                Tab previewTab = new Tab(selectedItem.getValue(), previewNode);
+                previewTab.setContent(previewNode);
 
-        if(artistAlbumItemMap.containsKey(selectedItem)) {
+                PreviewTabController previewTabController = loader.getController();
+                previewTabController.setMainController(this);
+                previewTabController.setPlaylistValues(playlistItemMap.get(selectedItem));
+                previewTabController.refreshSongItemVBox();
+                previewTabController.setPlayPauseImageViewPaused(true);
+
+//                previewTab.setGraphic(new ImageView(fileUtils.getAlbumFXIcon(albumFile, "album")));
+
+                previewTabPane.getTabs().add(previewTab);
+                previewTabPane.getSelectionModel().select(previewTab);
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else if(artistItemMap.containsKey(selectedItem)) {
+//            Artist action
+        } else if (albumItemMap.containsKey(selectedItem)) {
             boolean operationAvailable = true;
             for (Tab tab : previewTabPane.getTabs()) {
                 if (tab.getText().equals(selectedItem.getValue())) {
@@ -280,7 +368,8 @@ public class Controller implements  Initializable {
                     operationAvailable = false;
                 }
             }
-            File albumFile = new File(App.userData.getRootDirectoryPath() + "\\" + selectedItem.getParent().getValue() + "\\" + selectedItem.getValue());
+
+            File albumFile = new File(albumItemMap.get(selectedItem));
 
             if (new File(albumFile.getParent()).getName().equals(treeView.getRoot().getValue())) {
                 operationAvailable = false;
@@ -296,7 +385,7 @@ public class Controller implements  Initializable {
 
                     PreviewTabController previewTabController = loader.getController();
                     previewTabController.setMainController(this);
-                    previewTabController.setValues(albumFile, fileUtils.getAlbumFXImage(albumFile, "album"), albumFile.getName(), new File(albumFile.getParent()).getName(), "album");
+                    previewTabController.setAlbumValues(albumFile);
                     previewTabController.refreshSongItemVBox();
                     previewTabController.setPlayPauseImageViewPaused(true);
 
@@ -309,10 +398,11 @@ public class Controller implements  Initializable {
                     throw new RuntimeException(e);
                 }
             }
-        } else {
+        } else if(songItemMap.containsKey(selectedItem)) {
             musicPlayer.loadSong(songItemMap.get(selectedItem));
             musicPlayer.play();
-
+        } else {
+            System.err.println("Unknown item selected: " + selectedItem.getValue());
         }
 
     }
@@ -388,11 +478,7 @@ public class Controller implements  Initializable {
             artistLabel.setText(musicPlayer.getArtistName());
             System.out.println("Setting labels to: " + musicPlayer.getSongTitle() + " by " + musicPlayer.getArtistName());
 
-            try {
-                currentAlbumImageView.setImage(fileUtils.getAlbumFXImage(new File(new File(musicPlayer.getCurrentSongPath()).getParent()), "album"));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            currentAlbumImageView.setImage(fileUtils.getAlbumFXImage(new File(musicPlayer.getCurrentSongPath()).getParentFile(), ParentType.ALBUM));
 
         } else {
             resetBottomBar();
