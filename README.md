@@ -14,20 +14,27 @@ The intention for this application is to be able to rip flac files from your cd 
 ## TODO:
 ### Incomplete 
 - [ ] Color picker for theme
-- [ ] In depth song settings (Volume, playback speed, pitch?)
-- [ ] Playlists
-- [ ] Search feature
+- [ ] Volume control
+- [ ] Playback speed
 - [ ] Make everything resize nicely
 - [ ] Show songs in queue
 - [ ] Add support for other file types
 - [ ] Gapless playback
-- [ ] Home page 
+- [ ] Home page (Recently played, Favorites, User content)
+- [ ] Shareable playlists
 - [ ] Artist pages
-- [ ] Setup wizard
+- [ ] Customizable artist icons
+- [ ] Listening stats
+- [ ] Highlight active parent (playlist/album)
+- [ ] 
 
 ### Completed  ✓
 - [x] Shuffling
 - [x] Fix the window
+- [x] Search feature
+- [x] Setup wizard
+- [x] Playlists 
+- [x] 
 
 ## Credits:
 - I am using some Icon8 icons for my buttons, they're great.
