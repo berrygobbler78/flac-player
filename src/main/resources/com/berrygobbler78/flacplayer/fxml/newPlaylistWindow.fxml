@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="100.0" minWidth="300.0" styleClass="transparent" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.berrygobbler78.flacplayer.controllers.PopupWindowsController">
+   <children>
+      <TextField fx:id="playlistNameField" alignment="CENTER" layoutX="76.0" layoutY="37.0" onAction="#enterPlaylistName" promptText="Enter playlist name..." styleClass="transparent" stylesheets="@../css/styles.css" />
+      <Label layoutX="82.0" layoutY="20.0" styleClass="transparent" text="Name your new playlist:" textFill="#b5b5b5">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
+   </children>
+</AnchorPane>
