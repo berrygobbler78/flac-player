@@ -10,7 +10,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
@@ -26,59 +25,58 @@ public class SongItemController implements Initializable {
     private Menu playlistMenu;
 
     private String songPath;
-
-    private MusicPlayer musicPlayer;
-    private MainController controller;
+    
+    private MainController mainController;
     private PreviewTabController previewTabController;
 
-    private References references = App.references;
+    private final References references = App.references;
 
-    private Enums.PARENT_TYPE parentType;
+    private Constants.PARENT_TYPE parentType;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.musicPlayer = App.musicPlayer;
+        
     }
 
-    public void setItemInfo(int songNumber, String songPath, Enums.PARENT_TYPE parentType) {
-        this.songNumberLabel.setText(String.valueOf(songNumber));
-        this.songTitleLabel.setText(FileUtils.getSongTitle(songPath));
-        switch(parentType) {
-            case PLAYLIST -> {
-                String text =  FileUtils.getSongArtist(songPath) + " // " + FileUtils.getSongAlbum(songPath);
-                songArtistLabel.setText(text);
-            }
-            case ALBUM -> songArtistLabel.setText(FileUtils.getSongArtist(songPath));
-        }
-        try {
-            this.songAlbumIV.setImage(FileUtils.getCoverImage(songPath, Enums.FILE_TYPE.SONG));
-        } catch (IOException e) {
-            System.err.println("Error loading cover image: " + e);
-        }
+    public void setItemInfo(int songNumber, String songPath, Constants.PARENT_TYPE parentType) {
         this.songPath = songPath;
         this.parentType = parentType;
-
+        
+        this.songNumberLabel.setText(String.valueOf(songNumber));
+        this.songTitleLabel.setText(FileUtils.getSongTitle(songPath));
+        this.songAlbumIV.setImage(FileUtils.getCoverImage(songPath, FileUtils.FILE_TYPE.SONG));
+        
+        switch(parentType) {
+            case PLAYLIST -> songArtistLabel.setText(FileUtils.getSongArtist(songPath) + " // " + FileUtils.getSongAlbum(songPath));
+            case ALBUM -> songArtistLabel.setText(FileUtils.getSongArtist(songPath));
+        }
+        
         for(Playlist playlist : App.references.getPlaylists()) {
-            CheckMenuItem playlistMenuItem = new CheckMenuItem(playlist.getName());
-
-            if(playlist.getSongList().contains(songPath)) {
-                playlistMenuItem.setSelected(true);
-            }
-
-            playlistMenuItem.setOnAction(_ -> {
-                if(playlistMenuItem.isSelected() && !playlist.getSongList().contains(songPath)) {
-                    playlist.addSong(songPath);
-                } else if(playlist.getSongList().contains(songPath)) {
-                    playlist.removeSong(playlist.getSongList().indexOf(songPath));
-                }
-            });
-
+            CheckMenuItem playlistMenuItem = getCheckMenuItem(songPath, playlist);
             playlistMenu.getItems().add(playlistMenuItem);
         }
     }
 
-    void setControllers(MainController controller, PreviewTabController previewTabController) {
-        this.controller = controller;
+    private static CheckMenuItem getCheckMenuItem(String songPath, Playlist playlist) {
+        CheckMenuItem playlistMenuItem = new CheckMenuItem(playlist.getName());
+
+        if(playlist.getSongList().contains(songPath)) {
+            playlistMenuItem.setSelected(true);
+        }
+
+        playlistMenuItem.setOnAction(_ -> {
+            if(playlistMenuItem.isSelected() && !playlist.getSongList().contains(songPath)) {
+                playlist.addSong(songPath);
+            } else if(playlist.getSongList().contains(songPath)) {
+                playlist.removeSong(playlist.getSongList().indexOf(songPath));
+            }
+        });
+
+        return playlistMenuItem;
+    }
+
+    public void setControllers(MainController mainController, PreviewTabController previewTabController) {
+        this.mainController = mainController;
         this.previewTabController = previewTabController;
     }
 
@@ -86,18 +84,18 @@ public class SongItemController implements Initializable {
     private void playSong() {
         switch(parentType) {
             case PLAYLIST:
-                musicPlayer.setParentTypePlaylist(previewTabController.getPlaylist());
+                MusicPlayer.setParentTypePlaylist(previewTabController.getPlaylist());
                 break;
             case ALBUM:
-                musicPlayer.setParentTypeAlbum(Path.of(songPath).getParent().toString());
+                MusicPlayer.setParentTypeAlbum(Path.of(songPath).getParent().toString());
         }
 
-        musicPlayer.setPreviewTabController(previewTabController);
-        musicPlayer.playSongNum(Integer.parseInt(songNumberLabel.getText())-1);
+        MusicPlayer.setPreviewTabController(previewTabController);
+        MusicPlayer.playSongNum(Integer.parseInt(songNumberLabel.getText())-1);
     }
 
     @FXML
     private void addToQueue() {
-        musicPlayer.addToUserQueue(songPath);
+        MusicPlayer.addToUserQueue(songPath);
     }
 }
