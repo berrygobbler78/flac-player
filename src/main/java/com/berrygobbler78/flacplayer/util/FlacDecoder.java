@@ -9,26 +9,30 @@ import org.jflac.util.WavWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public class FlacDecoder implements PCMProcessor {
+    private final Logger LOGGER = Logger.getLogger(FlacDecoder.class.getName());
+
     private static WavWriter wav;
 
-    public void flacToWav(String inFileName, String outFileName) {
-        try (FileInputStream is = new FileInputStream(inFileName); FileOutputStream os = new FileOutputStream(outFileName)) {
+    public void flacToWav(String inPath, String outPath) {
+        try (FileInputStream is = new FileInputStream(inPath); FileOutputStream os = new FileOutputStream(outPath)) {
             wav = new WavWriter(os);
             FLACDecoder flacDecoder = new FLACDecoder(is);
             flacDecoder.addPCMProcessor(this);
             flacDecoder.decode();
         } catch (IOException e) {
-            System.err.println("Some");
+            LOGGER.warning("Error while converting file " + inPath);
         }
     }
+
     @Override
     public void processStreamInfo(StreamInfo info) {
         try {
             wav.writeHeader(info);
         } catch (IOException e) {
-            System.err.println("Couldn't process stream info: " + e);
+            LOGGER.warning("Error while processing stream info: " + info);
         }
     }
 
@@ -37,7 +41,7 @@ public class FlacDecoder implements PCMProcessor {
         try {
             wav.writePCM(pcm);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.warning("Error while processing PCM: " + pcm);
         }
     }
 }
