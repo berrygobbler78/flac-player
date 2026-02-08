@@ -61,78 +61,99 @@
                         </HBox>
                      </left>
                      <right>
-                        <HBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="100.0" prefWidth="200.0" stylesheets="@css/styles.css" BorderPane.alignment="CENTER" />
+                        <HBox alignment="CENTER_RIGHT" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="100.0" prefWidth="200.0" stylesheets="@css/styles.css" BorderPane.alignment="CENTER">
+                           <children>
+                              <JFXSlider fx:id="volumeSlider" max="150.0" onMousePressed="#initChangeSongPos" onMouseReleased="#changeSongPos" prefHeight="26.0" prefWidth="104.0" stylesheets="@../css/slider.css" value="100.0" />
+                              <MenuButton fx:id="menuButton" mnemonicParsing="false" popupSide="TOP" styleClass="transparent" stylesheets="@../css/menuButton.css">
+                                 <items>
+                                    <Menu mnemonicParsing="false" text="Playlists" />
+                                    <MenuItem mnemonicParsing="false" text="Add to Queue" />
+                                    <MenuItem mnemonicParsing="false" text="Open in Explorer" />
+                                 </items>
+                                 <graphic>
+                                    <ImageView fitHeight="150.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../graphics/vertical_menu.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </MenuButton>
+                           </children>
+                           <BorderPane.margin>
+                              <Insets right="10.0" />
+                           </BorderPane.margin></HBox>
                      </right>
+                     <center>
+                        <VBox alignment="CENTER" fillWidth="false" minWidth="455.0" prefHeight="100.0" prefWidth="613.0" spacing="5.0" BorderPane.alignment="CENTER">
+                           <children>
+                              <HBox alignment="CENTER" prefHeight="48.0" spacing="10.0">
+                                 <children>
+                                    <Button fx:id="shuffleButton" mnemonicParsing="false" onAction="#shuffleToggle" styleClass="transparent" stylesheets="@css/styles.css">
+                                       <graphic>
+                                          <ImageView fx:id="shuffleImageView" fitHeight="150.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../graphics/shuffle_unselected.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="previousButton" alignment="CENTER" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#previousMedia" styleClass="transparent" stylesheets="@css/styles.css">
+                                       <graphic>
+                                          <ImageView fx:id="previousImageView" fitHeight="50.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../graphics/previous.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="playPauseButton" alignment="CENTER" mnemonicParsing="false" onAction="#playPauseMedia" styleClass="transparent" stylesheets="@css/styles.css">
+                                       <graphic>
+                                          <ImageView fx:id="currentPlayPauseImageView" fitHeight="50.0" fitWidth="40.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../graphics/play.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="nextButton" minWidth="53.0" mnemonicParsing="false" onAction="#nextMedia" prefHeight="25.0" styleClass="transparent" stylesheets="@css/styles.css">
+                                       <graphic>
+                                          <ImageView fx:id="nextImageView" fitHeight="50.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../graphics/next.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="repeatButton" mnemonicParsing="false" onAction="#repeatCycle" styleClass="transparent">
+                                       <graphic>
+                                          <ImageView fx:id="repeatImageView" fitHeight="150.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../graphics/repeat_unselected.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER" prefHeight="20.0">
+                                 <children>
+                                    <Label fx:id="currentTrackTime" prefHeight="15.0" text="00:00" textFill="#cdcdcd">
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                    <JFXSlider fx:id="songProgressSlider" onMousePressed="#initChangeSongPos" onMouseReleased="#changeSongPos" prefHeight="57.0" prefWidth="499.0" stylesheets="@../css/slider.css" value="50.0" />
+                                    <Label fx:id="totTrackTime" prefHeight="15.0" text="00:00" textFill="#cdcdcd">
+                                       <HBox.margin>
+                                          <Insets left="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </center>
                   </BorderPane>
-                  <HBox prefHeight="100.0" prefWidth="285.0" />
-                  <VBox alignment="CENTER" fillWidth="false" minWidth="900.0" prefHeight="100.0" spacing="5.0">
-                     <children>
-                        <HBox alignment="CENTER" prefHeight="48.0" prefWidth="840.0" spacing="10.0">
-                           <children>
-                              <Button fx:id="shuffleButton" mnemonicParsing="false" onAction="#shuffleToggle" styleClass="transparent" stylesheets="@css/styles.css">
-                                 <graphic>
-                                    <ImageView fx:id="shuffleImageView" fitHeight="150.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../graphics/shuffle_unselected.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                              <Button fx:id="previousButton" alignment="CENTER" mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" onAction="#previousMedia" styleClass="transparent" stylesheets="@css/styles.css">
-                                 <graphic>
-                                    <ImageView fx:id="previousImageView" fitHeight="50.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../graphics/previous.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                              <Button fx:id="playPauseButton" alignment="CENTER" mnemonicParsing="false" onAction="#playPauseMedia" styleClass="transparent" stylesheets="@css/styles.css">
-                                 <graphic>
-                                    <ImageView fx:id="currentPlayPauseImageView" fitHeight="50.0" fitWidth="40.0" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../graphics/play.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                              <Button fx:id="nextButton" minWidth="53.0" mnemonicParsing="false" onAction="#nextMedia" prefHeight="25.0" styleClass="transparent" stylesheets="@css/styles.css">
-                                 <graphic>
-                                    <ImageView fx:id="nextImageView" fitHeight="50.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../graphics/next.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                              <Button fx:id="repeatButton" mnemonicParsing="false" onAction="#repeatCycle" styleClass="transparent">
-                                 <graphic>
-                                    <ImageView fx:id="repeatImageView" fitHeight="150.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../graphics/repeat_unselected.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Button>
-                           </children>
-                        </HBox>
-                        <HBox alignment="CENTER" prefHeight="20.0">
-                           <children>
-                              <Label fx:id="currentTrackTime" prefHeight="15.0" text="00:00" textFill="#cdcdcd">
-                                 <HBox.margin>
-                                    <Insets right="5.0" />
-                                 </HBox.margin>
-                              </Label>
-                              <JFXSlider fx:id="songProgressSlider" onMousePressed="#initChangeSongPos" onMouseReleased="#changeSongPos" prefHeight="57.0" prefWidth="499.0" stylesheets="@../css/slider.css" value="50.0" />
-                              <Label fx:id="totTrackTime" prefHeight="15.0" text="00:00" textFill="#cdcdcd">
-                                 <HBox.margin>
-                                    <Insets left="5.0" />
-                                 </HBox.margin>
-                              </Label>
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
                </children>
             </StackPane>
          </bottom>
@@ -147,7 +168,7 @@
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <HBox alignment="CENTER_RIGHT" layoutX="690.0" prefHeight="46.0" prefWidth="200.0" AnchorPane.topAnchor="0.0">
+                              <HBox alignment="CENTER_RIGHT" layoutX="1048.0" layoutY="14.0" AnchorPane.topAnchor="14.0">
                                  <children>
                                     <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
