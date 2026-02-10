@@ -37,12 +37,24 @@ public class App extends Application {
 
     private static Stage primaryStage;
 
+    public enum OS {
+        LINUX,
+        WINDOWS_11
+    }
+
+    private static OS currentOS;
+
     void main() {
         launch();
     }
 
     @Override
     public void start(Stage stage) throws IOException {
+        switch (System.getProperty("os.name")) {
+            case "Linux" -> currentOS = OS.LINUX;
+            case "Windows 11" -> currentOS = OS.WINDOWS_11;
+        }
+
         deleteTempFile();
 
         // Checks if userData already exists, if not prompt for new directory
@@ -76,9 +88,6 @@ public class App extends Application {
 
         loadPlaylists();
 
-        Win11ThemeWindowManager themeWindowManager =
-                (Win11ThemeWindowManager) ThemeWindowManagerFactory.create(); // For coloring window border
-
         FXMLLoader fxmlLoader =
                 new FXMLLoader(new File(FXML_PATHS.MAIN.get()).getAbsoluteFile().toURI().toURL());
 
@@ -92,8 +101,12 @@ public class App extends Application {
         primaryStage.show();
         primaryStage.setOnCloseRequest(_ -> saveUserData());
 
-        themeWindowManager.setWindowFrameColor(primaryStage, Color.web("#121212"));
-        themeWindowManager.setDarkModeForWindowFrame(primaryStage, true);
+        if(currentOS == OS.WINDOWS_11) {
+            Win11ThemeWindowManager themeWindowManager =
+                    (Win11ThemeWindowManager) ThemeWindowManagerFactory.create(); // For coloring window border
+            themeWindowManager.setWindowFrameColor(primaryStage, Color.web("#121212"));
+            themeWindowManager.setDarkModeForWindowFrame(primaryStage, true);
+        }
 
         MusicPlayer.setController(fxmlLoader.getController());
 
@@ -152,6 +165,10 @@ public class App extends Application {
     }
 
     public void loadPlaylists() {
+        if(App.references.getPlaylists().isEmpty()) {
+            return;
+        }
+
         try {
             for (File file : Objects.requireNonNull(new File("src/main/resources/com/berrygobbler78/flacplayer/cache/playlists").listFiles())) {
                 if (file.getName().endsWith(".ser")) {
@@ -210,8 +227,14 @@ public class App extends Application {
             textField1.setMaxWidth(300.0);
 
         Button button1 = new Button();
-            button1.setOnAction(_ ->
-                    textField1.setText(FileUtils.openDirectoryChooser(primaryStage, "Choose directory", "C://").getAbsolutePath()));
+        switch (currentOS) {
+            case WINDOWS_11 ->
+                button1.setOnAction(_ -> textField1.setText(FileUtils.openDirectoryChooser(primaryStage, "Choose directory", "C://").getAbsolutePath()));
+            case LINUX ->
+                    button1.setOnAction(_ -> textField1.setText(FileUtils.openDirectoryChooser(primaryStage, "Choose directory", "/home").getAbsolutePath()));
+
+        }
+
             button1.setText("Open Explorer");
 
         HBox hbox1 = new HBox();
@@ -255,5 +278,9 @@ public class App extends Application {
                 saveReferences();
             }
         });
+    }
+
+    public OS getCurrentOS() {
+        return currentOS;
     }
 }

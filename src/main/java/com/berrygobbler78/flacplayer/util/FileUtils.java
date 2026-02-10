@@ -49,7 +49,7 @@ public class FileUtils {
     public static FileFilter getFileFilter(FILTER_TYPE filterType) throws NullPointerException {
         switch (filterType) {
             case FOLDER -> {return File::isDirectory;}
-            case FLAC -> {return f -> f.getName().endsWith(".flac");}
+            case FLAC -> {return f -> f.getAbsolutePath().endsWith(".flac");}
             case COVER_IMAGE -> {return f -> f.getName().endsWith("coverImage.png");}
             case COVER_ICON -> {return f -> f.getName().endsWith("coverIcon.png");}
             default -> throw new NullPointerException("Unknown filter type:"  + filterType);
@@ -82,30 +82,34 @@ public class FileUtils {
             }
         }
 
-        for(File playListFolder : Objects.requireNonNull(new File("src/main/resources/com/berrygobbler78/flacplayer/graphics/playlist-art").listFiles(getFileFilter(FILTER_TYPE.FOLDER)))) {
+        if(!new File("src/main/resources/com/berrygobbler78/flacplayer/graphics/playlist-art").exists()) {
+            return;
+        }
+
+        for(File playlistFolder : Objects.requireNonNull(new File("src/main/resources/com/berrygobbler78/flacplayer/graphics/playlist-art").listFiles(getFileFilter(FILTER_TYPE.FOLDER)))) {
             for(Playlist playlist : App.references.getPlaylists()) {
                 String playlistName = playlist.getName().toLowerCase().replace(" ", "-");
-                if(!playListFolder.getName().equals(playlistName)) {
+                if(!playlistFolder.getName().equals(playlistName)) {
                     LOGGER.warning("Playlist name does not match: " + playlistName);
                     return;
                 }
 
-                if (Objects.requireNonNull(playListFolder.listFiles(getFileFilter(FILTER_TYPE.COVER_IMAGE))).length == 0) {
+                if (Objects.requireNonNull(playlistFolder.listFiles(getFileFilter(FILTER_TYPE.COVER_IMAGE))).length == 0) {
                     try {
-                        File coverImage = new File(playListFolder, "coverImage.png");
+                        File coverImage = new File(playlistFolder, "coverImage.png");
                         BufferedImage coverBufferedImage =
-                                bufferedImageFromPath(playListFolder.getAbsolutePath() + "/"+ playlistName + ".png", 600, 600);
+                                bufferedImageFromPath(playlistFolder.getAbsolutePath() + "/"+ playlistName + ".png", 600, 600);
                         ImageIO.write(makeRoundedCorner(coverBufferedImage, 50), "png", coverImage);
                     } catch (IOException e) {
                         System.err.println("Error generating image cache with exception: " + e);
                     }
                 }
 
-                if (Objects.requireNonNull(playListFolder.listFiles(getFileFilter(FILTER_TYPE.COVER_ICON))).length == 0) {
+                if (Objects.requireNonNull(playlistFolder.listFiles(getFileFilter(FILTER_TYPE.COVER_ICON))).length == 0) {
                     try {
-                        File coverIcon = new File(playListFolder, "coverIcon.png");
+                        File coverIcon = new File(playlistFolder, "coverIcon.png");
                         BufferedImage coverBufferedImage =
-                                bufferedImageFromPath(playListFolder.getAbsolutePath() + "/"+ playlistName + ".png", 600, 600);
+                                bufferedImageFromPath(playlistFolder.getAbsolutePath() + "/"+ playlistName + ".png", 600, 600);
                         ImageIO.write(resizeBufferedImage(coverBufferedImage, 20, 20), "png", coverIcon);
                     } catch (IOException e) {
                         System.err.println("Error generating image cache with exception: " + e);
@@ -122,9 +126,11 @@ public class FileUtils {
         }
 
         String songName = songPath;
-        songName= songPath.split("[\\\\/]")[songName.split("[\\\\/]").length - 1];
-        songName = songName.substring(songName.indexOf(".") + 1);
-        songName = songName.split("-")[0].trim();
+
+        songName = songPath.replace(".flac", "");
+        songName= songName.split("[\\\\/]")[songName.split("[\\\\/]").length - 1];
+        songName = songName.substring(songName.indexOf("-") + 1).trim();
+//        songName = songName.split("\\.")[0].trim();
 
         return songName;
     }
@@ -220,7 +226,11 @@ public class FileUtils {
         }
     }
 
-    public static void flacToWav(String fileIn, String fileOut) { DECODER.flacToWav(fileIn, fileOut); }
+    public static void flacToWav(String fileIn, String fileOut) {
+        LOGGER.info("Starting decoding for: " + fileIn);
+        DECODER.flacToWav(fileIn, fileOut);
+        LOGGER.info("Done!");
+    }
 
     public File fileChooser(Stage stage, String title, String directoryPath, String extensionDesc, String extension) {
         FileChooser fileChooser = new FileChooser();

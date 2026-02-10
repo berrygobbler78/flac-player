@@ -102,10 +102,15 @@ public class PreviewTabController implements Initializable {
         songItemVBox.getChildren().clear();
 
         if(type == Constants.PARENT_TYPE.ALBUM) {
-            try {
+            try {;
 
                 ArrayList<File> songListArray =
                         new ArrayList<>(Arrays.asList(Objects.requireNonNull(parentFile.listFiles(FileUtils.getFileFilter(FileUtils.FILTER_TYPE.FLAC)))));
+                Collections.sort(songListArray);
+
+                for(File f: songListArray) {
+                    System.out.println(f.getName());
+                }
 
                 Node[] nodes = new Node[songListArray.size()];
 
@@ -117,6 +122,8 @@ public class PreviewTabController implements Initializable {
                     SongItemController songItemController = loader.getController();
 
                     File song = songListArray.get(i);
+
+                    System.out.println(song.getAbsolutePath() );
 
                     songItemController.setItemInfo(
                             i + 1,

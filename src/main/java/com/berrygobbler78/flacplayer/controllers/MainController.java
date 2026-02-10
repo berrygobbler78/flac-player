@@ -557,7 +557,7 @@ public class MainController implements  Initializable {
             MusicPlayer.shuffle();
         } else {
             shuffleImageView.setImage(IMAGES.SHUFFLE_UNSELECTED.get());
-            MusicPlayer.refreshSongQueue();
+            MusicPlayer.refreshSongQueue(-1);
         }
     }
 

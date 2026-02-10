@@ -3,6 +3,7 @@ package com.berrygobbler78.flacplayer;
 import com.berrygobbler78.flacplayer.Constants.*;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -103,27 +104,18 @@ public final class MusicPlayer {
                 break;
         }
 
-        refreshSongQueue();
+        refreshSongQueue(0);
     }
 
     public static void playSongNum(int num) {
-        switch(parentType) {
-            case ALBUM:
-                loadSong(Objects.requireNonNull(albumFile.listFiles())[num].getAbsolutePath());
-                play();
-                break;
-            case PLAYLIST:
-                loadSong(playlist.getSongList().get(num));
-                play();
-                break;
-        }
-
-        refreshSongQueue();
+        refreshSongQueue(num);
+        play();
     }
 
     public static void setParentTypeAlbum(String albumPath) {
         MusicPlayer.albumPath = albumPath;
         albumFile = new File(MusicPlayer.albumPath);
+
         parentType = PARENT_TYPE.ALBUM;
     }
 
@@ -138,22 +130,33 @@ public final class MusicPlayer {
         }
     }
 
-    public static void refreshSongQueue() {
+    public static void refreshSongQueue(int i) {
+        System.out.println("num="+ i);
+        if(i == -1) {
+
+        }
         nextSongsQueue = new ArrayList<>();
         previousSongsQueue = new ArrayList<>();
         boolean add = false;
 
         switch (parentType) {
             case ALBUM:
-                for(File file : Objects.requireNonNull(albumFile.listFiles(FileUtils.getFileFilter(FileUtils.FILTER_TYPE.FLAC)))) {
-                    if(add) {
+                File[] files = Objects.requireNonNull(albumFile.listFiles(FileUtils.getFileFilter(FileUtils.FILTER_TYPE.FLAC)));
+                Arrays.sort(files);
+
+                int j = 0;
+                for(File file : files) {
+                    if(j == i) {
+                        loadSong(file.getAbsolutePath());
+                    } else if(add) {
                         nextSongsQueue.add(file.getAbsolutePath());
+                        System.out.println("next" + file.getAbsolutePath());
                     } else {
                         previousSongsQueue.add(file.getAbsolutePath());
+                        System.out.println("prev" + file.getAbsolutePath());
                     }
-                    if(file.getAbsolutePath().equals(currentSongPath)) {
-                        add = true;
-                    }
+
+                    j++;
                 }
                 break;
             case PLAYLIST:
@@ -176,6 +179,8 @@ public final class MusicPlayer {
     }
 
     public static void loadSong(String songPath) {
+        LOGGER.info(String.format("Loading song: [%s]", FileUtils.getSongTitle(songPath)));
+
         if(mediaPlayer != null) {
             mediaPlayer.dispose();
         }
@@ -299,11 +304,8 @@ public final class MusicPlayer {
 
     public static void next() {
         if(repeatStatus == REPEAT_STATUS.REPEAT_ONE) {
-            stop();
             mediaPlayer.seek(Duration.ZERO);
-            play();
             return;
-
         }
 
         stop();
