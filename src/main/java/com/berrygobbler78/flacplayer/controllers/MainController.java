@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.berrygobbler78.flacplayer.App;
-import com.berrygobbler78.flacplayer.MusicPlayer;
+import com.berrygobbler78.flacplayer.util.MusicPlayer;
 import com.berrygobbler78.flacplayer.userdata.Playlist;
 import com.berrygobbler78.flacplayer.userdata.References;
-import com.berrygobbler78.flacplayer.Constants.*;
+import com.berrygobbler78.flacplayer.util.Constants.*;
 import com.berrygobbler78.flacplayer.util.FileUtils.*;
 
 import com.berrygobbler78.flacplayer.util.FileUtils;
@@ -91,8 +91,12 @@ public class MainController implements  Initializable {
 
     boolean paused = true;
 
+    private MusicPlayer musicPlayer;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        musicPlayer = new MusicPlayer(this);
+
         previewTabPane.setTabDragPolicy(TabPane.TabDragPolicy.REORDER);
         previewTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         previewTabPane.setTabMaxWidth(125);
@@ -114,9 +118,8 @@ public class MainController implements  Initializable {
         songProgressSlider.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::updateSongPos);
 
        volumeSlider.valueProperty().addListener((ObservableValue<? extends Number> _, Number _, Number _) -> {
-           if (MusicPlayer.isReady()) {
-               System.out.println(volumeSlider.getValue() / 150.0);
-               MusicPlayer.setVolume((float) (volumeSlider.getValue() / 150.0));
+           if (musicPlayer.getMusicPlayerState() != MusicPlayer.MUSIC_PLAYER_STATUS.STOPPED) {
+               musicPlayer.setVolume((float) (volumeSlider.getValue() / 150.0));
            }
        });
     }
@@ -405,7 +408,7 @@ public class MainController implements  Initializable {
             previewTabController.setMainController(this);
             previewTabController.setPlaylistValues(playlistItemMap.get(selectedItem));
             previewTabController.refreshSongItemVBox();
-            previewTabController.setPlayPauseImageViewPaused(true);
+            previewTabController.setPaused(true);
 
             previewTabPane.getTabs().add(previewTab);
             previewTabPane.getSelectionModel().select(previewTab);
@@ -455,7 +458,7 @@ public class MainController implements  Initializable {
                 previewTabController.setMainController(this);
                 previewTabController.setAlbumValues(albumFile);
                 previewTabController.refreshSongItemVBox();
-                previewTabController.setPlayPauseImageViewPaused(true);
+                previewTabController.setPaused(true);
 
                 try {
 
@@ -474,8 +477,7 @@ public class MainController implements  Initializable {
                 }
             }
         } else if(songItemMap.containsKey(selectedItem)) {
-            MusicPlayer.loadSong(songItemMap.get(selectedItem));
-            MusicPlayer.play();
+            musicPlayer.loadSong(songItemMap.get(selectedItem), true);
         } else {
             LOGGER.warning("Unknown item selected: " + selectedItem.getValue());
         }
@@ -483,14 +485,14 @@ public class MainController implements  Initializable {
 
     @FXML
     public void playPauseMedia() {
-        if (MusicPlayer.isPlaying()) {
-            MusicPlayer.pause();
+        if (musicPlayer.getMusicPlayerState() == MusicPlayer.MUSIC_PLAYER_STATUS.PLAYING) {
+            musicPlayer.pause();
         } else {
-            MusicPlayer.play();
+            musicPlayer.play();
         }
     }
 
-    public void setCurrentPlayPauseImageViewPaused(Boolean paused) {
+    public void setPaused(Boolean paused) {
         if(paused) {
             currentPlayPauseImageView.setImage(IMAGES.PLAY.get());
         } else  {
@@ -507,11 +509,20 @@ public class MainController implements  Initializable {
     }
 
     public void updateBottomBar() {
-        songLabel.setText(FileUtils.getSongTitle(MusicPlayer.getCurrentSongPath()));
-        artistLabel.setText(FileUtils.getSongArtist(MusicPlayer.getCurrentSongPath()));
-        setCurrentPlayPauseImageViewPaused(!MusicPlayer.isPlaying());
+        songLabel.setText(FileUtils.getSongTitle(musicPlayer.getCurrentSongPath()));
+        artistLabel.setText(FileUtils.getSongArtist(musicPlayer.getCurrentSongPath()));
+
+        switch (musicPlayer.getMusicPlayerState()) {
+            case MusicPlayer.MUSIC_PLAYER_STATUS.PLAYING:
+                setPaused(false);
+                break;
+            default:
+                setPaused(true);
+                break;
+        }
+
         try{
-            currentAlbumImageView.setImage(FileUtils.getCoverImage(MusicPlayer.getCurrentSongPath(), FILE_TYPE.SONG));
+            currentAlbumImageView.setImage(FileUtils.getCoverImage(musicPlayer.getCurrentSongPath(), FILE_TYPE.SONG));
         } catch (Exception e) {
             System.err.println("Error loading song image: " + e.getMessage());
         }
@@ -519,12 +530,12 @@ public class MainController implements  Initializable {
 
     @FXML
     public void nextMedia() {
-        MusicPlayer.next();
+        musicPlayer.next();
     }
 
     @FXML
     public void previousMedia() {
-        MusicPlayer.previous();
+        musicPlayer.previous();
     }
 
     @FXML
@@ -534,15 +545,15 @@ public class MainController implements  Initializable {
         switch(repeatStatus) {
             case 0:
                 repeatImageView.setImage(IMAGES.REPEAT_UNSELECTED.get());
-                MusicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.OFF);
+                musicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.OFF);
                 break;
             case 1:
                 repeatImageView.setImage(IMAGES.REPEAT_ALL.get());
-                MusicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.REPEAT_ALL);
+                musicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.REPEAT_ALL);
                 break;
             case 2:
                 repeatImageView.setImage(IMAGES.REPEAT_ONE.get());
-                MusicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.OFF);
+                musicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.OFF);
                 break;
         }
     }
@@ -550,35 +561,38 @@ public class MainController implements  Initializable {
     @FXML
     public void shuffleToggle() {
         shuffleStatus = !shuffleStatus;
-        MusicPlayer.setShuffleStatus(shuffleStatus);
 
         if(shuffleStatus) {
             shuffleImageView.setImage(IMAGES.SHUFFLE_SELECTED.get());
-            MusicPlayer.shuffle();
+            musicPlayer.setShuffleStatus(MusicPlayer.SHUFFLE_STATUS.SHUFFLE);
         } else {
             shuffleImageView.setImage(IMAGES.SHUFFLE_UNSELECTED.get());
-            MusicPlayer.refreshSongQueue(-1);
+            musicPlayer.setShuffleStatus(MusicPlayer.SHUFFLE_STATUS.OFF);
         }
     }
 
     @FXML
     public void initChangeSongPos() {
-        MusicPlayer.pauseTimeline();
+        musicPlayer.pauseTimeline();
     }
 
     @FXML
     public void changeSongPos() {
-        MusicPlayer.changeSongPos(songProgressSlider.getValue());
+        musicPlayer.changeSongPos(songProgressSlider.getValue());
     }
 
     private void updateSongPos(MouseEvent e) {
-        setCurrentTrackTime(MusicPlayer.getSongPosFromSlider((int) songProgressSlider.getValue()));
+        setCurrentTrackTime(musicPlayer.getSongPosFromSlider((int) songProgressSlider.getValue()));
     }
 
     public void pickDirectory() {
         File selectedDirectory = FileUtils.openDirectoryChooser(new Stage(), "Pick a Directory", new File(App.references.getRootDirectoryPath()).getParent());
         App.references.setRootDirectoryPath(selectedDirectory.getAbsolutePath());
         refreshTreeView();
+    }
+
+    public MusicPlayer getMusicPlayer() {
+        return musicPlayer;
     }
 
 
