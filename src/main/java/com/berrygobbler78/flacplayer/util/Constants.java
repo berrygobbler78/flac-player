@@ -1,4 +1,4 @@
-package com.berrygobbler78.flacplayer;
+package com.berrygobbler78.flacplayer.util;
 
 import javafx.scene.image.Image;
 
