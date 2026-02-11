@@ -7,8 +7,9 @@ import java.util.logging.Logger;
 
 import com.berrygobbler78.flacplayer.userdata.Playlist;
 import com.berrygobbler78.flacplayer.userdata.References;
+import com.berrygobbler78.flacplayer.util.Constants;
 import com.berrygobbler78.flacplayer.util.FileUtils;
-import com.berrygobbler78.flacplayer.Constants.FXML_PATHS;
+import com.berrygobbler78.flacplayer.util.Constants.FXML_PATHS;
 
 import com.pixelduke.window.ThemeWindowManagerFactory;
 import com.pixelduke.window.Win11ThemeWindowManager;
@@ -108,8 +109,6 @@ public class App extends Application {
             themeWindowManager.setDarkModeForWindowFrame(primaryStage, true);
         }
 
-        MusicPlayer.setController(fxmlLoader.getController());
-
         LOGGER.log(Level.FINE, "Stage created.");
     }
 
@@ -198,12 +197,6 @@ public class App extends Application {
         if(!tempFile.exists()) {
             LOGGER.log(Level.INFO, "Temp file does not exist.");
             return;
-        }
-
-        try {
-            MusicPlayer.closeMediaPlayer();
-        } catch (NullPointerException e) {
-            LOGGER.log(Level.FINE, "No media player to be closed.");
         }
 
         if(tempFile.delete()) {
