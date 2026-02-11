@@ -1,7 +1,6 @@
 package com.berrygobbler78.flacplayer.util;
 
 import com.berrygobbler78.flacplayer.App;
-import com.berrygobbler78.flacplayer.Constants.*;
 
 import com.berrygobbler78.flacplayer.userdata.Playlist;
 import javafx.scene.image.Image;
@@ -19,7 +18,6 @@ import org.jaudiotagger.audio.flac.metadatablock.MetadataBlockDataPicture;
 import org.jaudiotagger.tag.flac.FlacTag;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -203,6 +201,29 @@ public class FileUtils {
         }
     }
 
+    public static File getCoverImageFile(String path, FILE_TYPE type) throws NullPointerException {
+        File file = new File(path);
+        try {
+            switch (type) {
+                case SONG -> {
+                    file = Objects.requireNonNull(file.getParentFile().listFiles(getFileFilter(FILTER_TYPE.COVER_IMAGE)))[0];
+                    return file;
+                }
+                case ALBUM, PLAYLIST -> {
+                    file = Objects.requireNonNull(file.listFiles(getFileFilter(FILTER_TYPE.COVER_IMAGE)))[0];
+                    return file;
+                }
+                case ARTIST -> {
+                    // TODO: Implement custom artist coverImages
+                    return null;
+                }
+                default -> throw new NullPointerException("Invalid FILE_TYPE " + type.name());
+            }
+        } catch (Exception e) {
+            throw new NullPointerException("Couldn't get cover art from path: " + path);
+        }
+    }
+
     public static Image getCoverIcon(String path, FILE_TYPE type) throws IOException {
         File file = new File(path);
         try {
@@ -226,10 +247,12 @@ public class FileUtils {
         }
     }
 
-    public static void flacToWav(String fileIn, String fileOut) {
+    public static boolean flacToWav(String fileIn, String fileOut) {
         LOGGER.info("Starting decoding for: " + fileIn);
         DECODER.flacToWav(fileIn, fileOut);
         LOGGER.info("Done!");
+
+        return true;
     }
 
     public File fileChooser(Stage stage, String title, String directoryPath, String extensionDesc, String extension) {
