@@ -14,6 +14,8 @@ module com.berrygobbler78.flacplayer {
     requires com.sun.jna.platform;
     requires com.sun.jna;
     requires java.logging;
+    requires jdk.dynalink;
+    requires JavaMediaTransportControls;
 
     opens com.berrygobbler78.flacplayer to javafx.fxml;
     exports com.berrygobbler78.flacplayer;
