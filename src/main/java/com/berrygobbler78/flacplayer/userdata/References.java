@@ -38,8 +38,9 @@ public class References implements Serializable {
 
     public void addPlaylist(Playlist playlist) {
         playlists.add(playlist);
-
         LOGGER.info(String.format("Added playlist: [%s]", playlist.getName()));
+
+        App.savePlaylists();
     }
 
     public void removePlaylist(Playlist playlist) {
