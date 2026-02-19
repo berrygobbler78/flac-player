@@ -31,8 +31,6 @@ public class SongItemController implements Initializable {
     private MainController mainController;
     private PreviewTabController previewTabController;
 
-    private final References references = App.references;
-
     private Constants.PARENT_TYPE parentType;
 
     private MusicPlayer musicPlayer;
@@ -48,14 +46,15 @@ public class SongItemController implements Initializable {
         
         this.songNumberLabel.setText(String.valueOf(songNumber));
         this.songTitleLabel.setText(FileUtils.getSongTitle(songPath));
+        // FIXME: Reduce runtime of below line
         this.songAlbumIV.setImage(FileUtils.getCoverImage(songPath, FileUtils.FILE_TYPE.SONG));
         
         switch(parentType) {
             case PLAYLIST -> songArtistLabel.setText(FileUtils.getSongArtist(songPath) + " // " + FileUtils.getSongAlbum(songPath));
             case ALBUM -> songArtistLabel.setText(FileUtils.getSongArtist(songPath));
         }
-        
-        for(Playlist playlist : App.references.getPlaylists()) {
+
+        for(Playlist playlist : App.getReferences().getPlaylists()) {
             CheckMenuItem playlistMenuItem = getCheckMenuItem(songPath, playlist);
             playlistMenu.getItems().add(playlistMenuItem);
         }
