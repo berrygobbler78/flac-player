@@ -67,10 +67,17 @@ public class Constants {
 
     public enum IMAGES {
         BERRIES(berriesImage),
-        WARNING(warningImage), CD(cdImage), SONG(songImage), USER(userImage),
-        PLAY(playImage), PAUSE(pauseImage),
-        REPEAT_UNSELECTED(repeatUnselectedImage), REPEAT_ALL(repeatSelectedImage),REPEAT_ONE(repeatOneSelectedImage),
-        SHUFFLE_UNSELECTED(shuffleUnselectedImage), SHUFFLE_SELECTED(shuffleSelectedImage);
+        WARNING(warningImage),
+        CD(cdImage),
+        SONG(songImage),
+        USER(userImage),
+        PLAY(playImage),
+        PAUSE(pauseImage),
+        REPEAT_UNSELECTED(repeatUnselectedImage),
+        REPEAT_ALL(repeatSelectedImage),
+        REPEAT_ONE(repeatOneSelectedImage),
+        SHUFFLE_UNSELECTED(shuffleUnselectedImage),
+        SHUFFLE_SELECTED(shuffleSelectedImage);
 
         private final Image IMAGE;
         IMAGES(Image image) {
