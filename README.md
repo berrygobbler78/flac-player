@@ -11,7 +11,7 @@ Please report bugs as you see them, I will fix them ASAP. Also let me know of an
 2. Rip your files. 
    1. I use EAC (Easy Audio Copy), with the MusicBrainz Metadata Plugin for metadata. (You will want metadata to show images). 
    My EAC profile is under resources.com.berrygobbler78.flacplayer. 
-   2. Use the format: [track#. title - artist.flac]. E.g: 1. Silly Music Vol.1 - The Goofsters.flac .
+   2. Use the format: [track2digits - title.flac]. E.g: 01 - Silly Music Vol.1.flac .
 3. Run the app and select your base directory and username. You can change it later in the settings. If at any time the userdata is messed up, it will prompt you to pick a new directory and username.
 4. Playlists!
    1. You can make playlists with the plus button in the explorer. 
