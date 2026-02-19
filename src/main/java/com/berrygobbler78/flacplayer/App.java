@@ -31,7 +31,7 @@ import org.controlsfx.dialog.WizardPane;
 public class App extends Application {
     private static final Logger LOGGER = Logger.getLogger(App.class.getName());
 
-    public static References references;
+    private static References references;
 
     private static final String referencesPath =
             "src/main/resources/com/berrygobbler78/flacplayer/cache/references.ser";
@@ -164,10 +164,6 @@ public class App extends Application {
     }
 
     public void loadPlaylists() {
-        if(App.references.getPlaylists().isEmpty()) {
-            return;
-        }
-
         try {
             for (File file : Objects.requireNonNull(new File("src/main/resources/com/berrygobbler78/flacplayer/cache/playlists").listFiles())) {
                 if (file.getName().endsWith(".ser")) {
@@ -273,7 +269,11 @@ public class App extends Application {
         });
     }
 
-    public OS getCurrentOS() {
+    public static References getReferences() {
+        return references;
+    }
+
+    public static OS getCurrentOS() {
         return currentOS;
     }
 }
