@@ -42,8 +42,9 @@ public class PreviewTabController implements Initializable {
     private Playlist playlist;
 
     private MainController controller;
-
     private MusicPlayer musicPlayer;
+
+    private String[] songList;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -84,11 +85,11 @@ public class PreviewTabController implements Initializable {
 
         imageView.setImage(FileUtils.getCoverImage(playlist.getPath(), FileUtils.FILE_TYPE.PLAYLIST));
         titleLabel.setText(playlist.getName());
-        artistLabel.setText(App.references.getUserName());
+        artistLabel.setText(App.getReferences().getUserName());
 
         MenuItem deletePlaylistItem = new MenuItem("Delete Playlist");
         deletePlaylistItem.setOnAction(_ -> {
-            App.references.removePlaylist(playlist);
+            App.getReferences().removePlaylist(playlist);
             controller.removeTab(this);
             controller.refreshTreeView();
         });
@@ -105,6 +106,7 @@ public class PreviewTabController implements Initializable {
     }
 
     public void refreshSongItemVBox() {
+
         songItemVBox.getChildren().clear();
 
         Task<Void> refreshVbox = new Task<>() {
@@ -127,8 +129,6 @@ public class PreviewTabController implements Initializable {
                             SongItemController songItemController = loader.getController();
 
                             File song = songListArray.get(i);
-
-                            System.out.println(song.getAbsolutePath() );
 
                             songItemController.setItemInfo(
                                     i + 1,
