@@ -4,6 +4,7 @@ import com.berrygobbler78.flacplayer.App;
 import com.berrygobbler78.flacplayer.util.Constants.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,6 +12,7 @@ import java.util.logging.Logger;
 import com.berrygobbler78.flacplayer.controllers.MainController;
 import com.berrygobbler78.flacplayer.controllers.PreviewTabController;
 import com.berrygobbler78.flacplayer.userdata.Playlist;
+import io.github.selemba1000.JMTCParameters;
 import io.github.selemba1000.JMTCPlayingState;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -77,7 +79,7 @@ public final class MusicPlayer {
     public MusicPlayer(MainController mainController) {
         setMainController(mainController);
 
-        MEDIA_TRANSPORT = new MediaTransport("BerryBush", "unknown", this);
+        MEDIA_TRANSPORT = new MediaTransport("berrybush", "/home/berrygobbler78/IdeaProjects/BerryBush/src/main/java/com/berrygobbler78/flacplayer/App.java", this);
         MEDIA_TRANSPORT.setEnabled(true);
     }
 
@@ -95,9 +97,13 @@ public final class MusicPlayer {
         if(playlist != null) {
             currentPlaylist = playlist;
             currentParentType = PARENT_TYPE.PLAYLIST;
-        } else {
+            LOGGER.info(String.format("Playlist [%s] set as parent", playlist.getName()));
+        } else if(albumFile != null) {
             currentAlbumFile = albumFile;
             currentParentType = PARENT_TYPE.ALBUM;
+            LOGGER.info(String.format("Album [%s] set as parent", albumFile.getName()));
+        } else {
+            LOGGER.warning("Nothing to add");
         }
     }
 
@@ -164,7 +170,7 @@ public final class MusicPlayer {
                 break;
             case PLAYLIST:
                 for(String song : currentPlaylist.getSongList()) {
-                    if(song.equals(currentPath)) {
+                    if(song.equals(currentPlaylist.getSongList().get(index))) {
                         loadSong(song, playAfter);
                         add = true;
                     } else if(add) {
@@ -179,6 +185,12 @@ public final class MusicPlayer {
         if(shuffleStatus == SHUFFLE_STATUS.SHUFFLE) {
             shuffle();
         }
+
+        LOGGER.info(
+                "Generated new parent queue!\n" +
+                        String.format("NextQueue length = [%s]\n", nextSongsQueue.size()) +
+                        String.format("PrevQueue length = [%s]\n", previousSongsQueue.size())
+                );
     }
 
     public void clearQueues() {
@@ -189,10 +201,12 @@ public final class MusicPlayer {
     // Play utils
 
     public void playFirstSong() {
+        LOGGER.log(Level.INFO, "Playing first song");
         generateParentQueue(0, true);
     }
 
     public void playSongNum(int index) {
+        LOGGER.log(Level.INFO, String.format("Playing [%s]", index));
         generateParentQueue(index, true);
     }
 
@@ -215,75 +229,86 @@ public final class MusicPlayer {
             songTimeline.stop();
         }
 
-        if(FileUtils.flacToWav(songPath, "src/main/resources/com/berrygobbler78/flacplayer/cache/temp.wav")) {
-            String wavPath = "src/main/resources/com/berrygobbler78/flacplayer/cache/temp.wav";
-            mediaPlayer = new MediaPlayer(new Media(new File(wavPath).toURI().toString()));
+        // FIXME: Threading for loading song
 
-            if(playAfter) {
-                play();
+        String wavPath = null;
+        try {
+            wavPath = FileUtils.flacToWav(songPath).getAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        mediaPlayer = new MediaPlayer(new Media(new File(wavPath).toURI().toString()));
+
+        if(playAfter) {
+            play();
+        }
+
+        mediaPlayer.setOnEndOfMedia(this::next);
+
+        mediaPlayer.setOnPlaying(()-> {
+            musicPlayerStatus = MUSIC_PLAYER_STATUS.PLAYING;
+            if(songTimeline != null) {
+                songTimeline.play();
             }
 
-            mediaPlayer.setOnEndOfMedia(this::next);
+            // Update gui
+            mainController.updateBottomBar();
+            if(previewTabController != null) {
+                previewTabController.setPaused(false);
+            }
 
-            mediaPlayer.setOnPlaying(()-> {
-                musicPlayerStatus = MUSIC_PLAYER_STATUS.PLAYING;
-                if(songTimeline != null) {
-                    songTimeline.play();
-                }
-
-                // Update gui
-                mainController.updateBottomBar();
-                if(previewTabController != null) {
-                    previewTabController.setPaused(false);
-                }
-
-                // Update transport
-                MEDIA_TRANSPORT.setState(JMTCPlayingState.PLAYING);
-            });
-
-            mediaPlayer.setOnPaused(()-> {
-                musicPlayerStatus = MUSIC_PLAYER_STATUS.PAUSED;
-                if(songTimeline != null) {
-                    songTimeline.pause();
-                }
-
-                // Update gui
-                mainController.updateBottomBar();
-                if(previewTabController != null) {
-                    previewTabController.setPaused(false);
-                }
-
-                // Update transport
-                MEDIA_TRANSPORT.setState(JMTCPlayingState.PAUSED);
-            });
-
-            mediaPlayer.setOnStopped(()-> {
-                musicPlayerStatus = MUSIC_PLAYER_STATUS.STOPPED;
-                if(songTimeline != null) {
-                    songTimeline.stop();
-                }
-
-                // Update gui
-                mainController.updateBottomBar();
-                if(previewTabController != null) {
-                    previewTabController.setPaused(true);
-                }
-
-                // Update transport
-                MEDIA_TRANSPORT.setState(JMTCPlayingState.STOPPED);
-            });
-
+            // Update transport
+            MEDIA_TRANSPORT.setState(JMTCPlayingState.PLAYING);
             updateJMTC();
 
-            if(playAfter) {
-                play();
+        });
+
+        mediaPlayer.setOnPaused(()-> {
+            musicPlayerStatus = MUSIC_PLAYER_STATUS.PAUSED;
+            if(songTimeline != null) {
+                songTimeline.pause();
             }
 
-            LOGGER.info("Loading done...");
+            // Update gui
+            mainController.updateBottomBar();
+            if(previewTabController != null) {
+                previewTabController.setPaused(false);
+            }
+
+            // Update transport
+            MEDIA_TRANSPORT.setState(JMTCPlayingState.PAUSED);
+            updateJMTC();
+
+        });
+
+        mediaPlayer.setOnStopped(()-> {
+            musicPlayerStatus = MUSIC_PLAYER_STATUS.STOPPED;
+            if(songTimeline != null) {
+                songTimeline.stop();
+            }
+
+            // Update gui
+            mainController.updateBottomBar();
+            if(previewTabController != null) {
+                previewTabController.setPaused(true);
+            }
+
+            // Update transport
+            MEDIA_TRANSPORT.setState(JMTCPlayingState.STOPPED);
+            updateJMTC();
+
+        });
+
+        if(playAfter) {
+            pause();
+            play();
         }
+
+        LOGGER.info("Loading done...");
+
     }
 
-    public void setVolume(float volume) {
+    public void setVolume(double volume) {
         if(mediaPlayer != null) {
             mediaPlayer.setVolume(volume);
         }
@@ -317,8 +342,6 @@ public final class MusicPlayer {
 
                     songTimeline.play();
                     mediaPlayer.play();
-
-                    updateJMTC();
 
                     LOGGER.info("First play");
                 });
@@ -375,18 +398,17 @@ public final class MusicPlayer {
             previousSongsQueue.addFirst(currentPath);
             loadSong(nextSongsQueue.getFirst(), true);
             nextSongsQueue.removeFirst();
-
         } else if(repeatStatus == REPEAT_STATUS.REPEAT_ALL) {
             previousSongsQueue.addFirst(currentPath);
             playFirstSong();
+        } else if(currentParentType == PARENT_TYPE.PLAYLIST) {
+
         }
     }
 
     public void previous() {
         if (mediaPlayer.getCurrentTime().toSeconds() > 3) {
-            pause();
             mediaPlayer.seek(Duration.ZERO);
-            play();
         } else if(!previousSongsQueue.isEmpty()) {
             nextSongsQueue.addFirst(currentPath);
             loadSong(previousSongsQueue.getFirst(), true);
@@ -394,12 +416,65 @@ public final class MusicPlayer {
         }
     }
 
-    public void setRepeatStatus(REPEAT_STATUS status) {
-        repeatStatus = status;
+    // Repeat status control
+
+    public void cycleRepeatStatus() {
+        switch (repeatStatus) {
+            case REPEAT_ONE:
+                repeatStatus = REPEAT_STATUS.OFF;
+                break;
+            case REPEAT_ALL:
+                repeatStatus = REPEAT_STATUS.REPEAT_ONE;
+                break;
+            case OFF:
+                repeatStatus = REPEAT_STATUS.REPEAT_ALL;
+                break;
+        }
+
+        mainController.updateRepeatButton();
     }
 
-    public void setShuffleStatus(SHUFFLE_STATUS status) {
-        this.shuffleStatus = status;
+    public void setRepeatStatus(JMTCParameters.LoopStatus loopStatus) {
+        switch (loopStatus) {
+            case None ->  repeatStatus = REPEAT_STATUS.OFF;
+            case Track ->   repeatStatus = REPEAT_STATUS.REPEAT_ONE;
+            case Playlist ->   repeatStatus = REPEAT_STATUS.REPEAT_ALL;
+        }
+
+        mainController.updateRepeatButton();
+    }
+
+    public REPEAT_STATUS getRepeatStatus() {
+        return repeatStatus;
+    }
+
+    // Shuffle status control
+
+    public void toggleShuffleStatus() {
+        switch (shuffleStatus) {
+            case OFF ->   shuffleStatus = SHUFFLE_STATUS.SHUFFLE;
+            case SHUFFLE ->   shuffleStatus = SHUFFLE_STATUS.OFF;
+        }
+
+        mainController.updateShuffleButton();
+
+        if(shuffleStatus == SHUFFLE_STATUS.SHUFFLE && !nextSongsQueue.isEmpty()) {
+            shuffle();
+        }
+    }
+
+    public void setShuffleStatus(boolean shuffle) {
+        if(shuffle) {
+            shuffleStatus = SHUFFLE_STATUS.SHUFFLE;
+        } else {
+            shuffleStatus = SHUFFLE_STATUS.OFF;
+        }
+
+        mainController.updateShuffleButton();
+    }
+
+    public SHUFFLE_STATUS getShuffleStatus() {
+        return shuffleStatus;
     }
 
     public void shuffle() {
@@ -417,10 +492,10 @@ public final class MusicPlayer {
                     FileUtils.getSongTitle(currentPath),
                     FileUtils.getSongArtist(currentPath),
                     currentPlaylist.getName(),
-                    App.references.getUserName(),
+                    App.getReferences().getUserName(),
                     0,
                     0,
-                    null
+                    FileUtils.getCoverImageFile(currentPath, FileUtils.FILE_TYPE.SONG)
             );
 
             return;
@@ -448,10 +523,10 @@ public final class MusicPlayer {
     }
 
     public int getSongPosFromSlider(int value) {
-        if(mediaPlayer != null) {
+        try {
             return (int) mediaPlayer.getStartTime().add(mediaPlayer.getTotalDuration().multiply(value / 100.0)).toSeconds();
-        } else {
-            return 0;
+        } catch (IllegalStateException e) {
+            return -1;
         }
     }
 
