@@ -71,7 +71,7 @@
                                           </ImageView>
                                        </children>
                                     </AnchorPane>
-                                    <Button mnemonicParsing="false" onMouseClicked="#playPreview" styleClass="transparent">
+                                    <Button mnemonicParsing="false" onMouseClicked="#playPreview" styleClass="transparent" stylesheets="@../css/styles.css">
                                        <graphic>
                                           <ImageView fx:id="playPauseImageView" fitHeight="150.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
                                              <image>
@@ -80,7 +80,7 @@
                                           </ImageView>
                                        </graphic>
                                     </Button>
-                                    <MenuButton fx:id="optionsMenuButton" mnemonicParsing="false" styleClass="transparent" stylesheets="@../css/menuButton.css">
+                                    <MenuButton fx:id="optionsMenuButton" mnemonicParsing="false" stylesheets="@../css/menuButton.css">
                                       <items>
                                         <MenuItem mnemonicParsing="false" text="Favorite" />
                                       </items>
