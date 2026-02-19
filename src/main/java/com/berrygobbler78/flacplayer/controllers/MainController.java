@@ -82,10 +82,6 @@ public class MainController implements  Initializable {
     private TreeItem<String> userItem = null;
 
     public static HashMap<Tab, PreviewTabController> tabControllerMap = new HashMap<>();
-    private static final References references = App.references;
-
-    private int repeatStatus = 0;
-    private boolean shuffleStatus = false;
 
     private final Stage primaryStage = App.getPrimaryStage();
 
@@ -202,7 +198,7 @@ public class MainController implements  Initializable {
 
     @FXML
     private void forceGenerateCache() {
-        for (File artistFolder : Objects.requireNonNull(new File(App.references.getRootDirectoryPath()).listFiles(FileUtils.getFileFilter(FILTER_TYPE.FOLDER)))) {
+        for (File artistFolder : Objects.requireNonNull(new File(App.getReferences().getRootDirectoryPath()).listFiles(FileUtils.getFileFilter(FILTER_TYPE.FOLDER)))) {
             for (File albumFolder : Objects.requireNonNull(artistFolder.listFiles(FileUtils.getFileFilter(FILTER_TYPE.FOLDER)))) {
                 for(File coverImage : Objects.requireNonNull(albumFolder.listFiles(FileUtils.getFileFilter(FILTER_TYPE.COVER_IMAGE)))){
                     if(coverImage.delete()) {
@@ -221,7 +217,7 @@ public class MainController implements  Initializable {
             }
         }
 
-        FileUtils.refreshCoverArt();
+        FileUtils.refreshAllArt();
     }
 
     public void setTotTrackTime(int sec) {
@@ -253,22 +249,22 @@ public class MainController implements  Initializable {
 
     @FXML
     private void openDirectory() {
-        FileUtils.openFileExplorer(App.references.getRootDirectoryPath());
+        FileUtils.openFileExplorer(App.getReferences().getRootDirectoryPath());
     }
 
     @FXML
     public void refreshTreeView() {
-        FileUtils.refreshCoverArt();
+        FileUtils.refreshAllArt();
 
         artistItemMap.clear();
         albumItemMap.clear();
         songItemMap.clear();
 
-        TreeItem<String> rootItem = new TreeItem<>(new File(App.references.getRootDirectoryPath()).getName());
+        TreeItem<String> rootItem = new TreeItem<>(new File(App.getReferences().getRootDirectoryPath()).getName());
 
-        TreeItem<String> userItem = new TreeItem<>(App.references.getUserName(), new ImageView(IMAGES.USER.get()));
-        if(references.getPlaylists() != null || !references.getPlaylists().isEmpty()) {
-            for(Playlist playlist : Objects.requireNonNull(App.references.getPlaylists())) {
+        TreeItem<String> userItem = new TreeItem<>(App.getReferences().getUserName(), new ImageView(IMAGES.USER.get()));
+        if(App.getReferences().getPlaylists() != null || !App.getReferences().getPlaylists().isEmpty()) {
+            for(Playlist playlist : Objects.requireNonNull(App.getReferences().getPlaylists())) {
                 Image playlistIcon;
 
                 try {
@@ -288,7 +284,7 @@ public class MainController implements  Initializable {
             rootItem.getChildren().add(userItem);
         }
 
-        for (File artistFile : Objects.requireNonNull(new File(App.references.getRootDirectoryPath()).listFiles(FileUtils.getFileFilter(FILTER_TYPE.FOLDER)))) {
+        for (File artistFile : Objects.requireNonNull(new File(App.getReferences().getRootDirectoryPath()).listFiles(FileUtils.getFileFilter(FILTER_TYPE.FOLDER)))) {
             TreeItem<String> artistItem = new TreeItem<>(artistFile.getName(), new ImageView(IMAGES.CD.get()));
             for (File albumFile : Objects.requireNonNull(artistFile.listFiles(FileUtils.getFileFilter(FILTER_TYPE.FOLDER)))) {
                 TreeItem<String> albumItem;
@@ -326,45 +322,61 @@ public class MainController implements  Initializable {
 
         treeView.setRoot(rootItem);
         treeView.setShowRoot(false);
+
+        treeView.getRoot().getChildren().sort((obj1, obj2) -> {
+
+            if (Objects.equals(obj1.getValue(), userItem.getValue()) || Objects.equals(obj2.getValue(), userItem.getValue())) {
+                return 0;
+            } else {
+                return obj1.getValue().compareTo(obj2.getValue());
+            }
+        });
+
         treeView.refresh();
     }
 
     @FXML
     private void newPlaylist() {
-        Win11ThemeWindowManager themeWindowManager = (Win11ThemeWindowManager) ThemeWindowManagerFactory.create();
-
         final Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(primaryStage);
 
         FXMLLoader loader = new FXMLLoader();
+        AnchorPane playlistPane = null;
 
-        try {
-            loader.setLocation(Path.of(FXML_PATHS.PREVIEW_TAB.get()).toUri().toURL());
-            AnchorPane playlistPane = loader.load();
-            PopupWindowsController controller = loader.getController();
-            controller.setValues(dialog, this);
+        try{
+            loader.setLocation(Path.of(FXML_PATHS.NEW_PLAYLIST.get()).toUri().toURL());
+            playlistPane = loader.load();
+        } catch (IOException e) {
+            LOGGER.severe("Could not load playlist window: " + e.getMessage());
+        }
+        PopupWindowsController controller = loader.getController();
+        controller.setValues(dialog, this);
 
-            Scene dialogScene = new Scene(playlistPane, 300, 100);
-            dialogScene.setFill(Color.TRANSPARENT);
+        Scene dialogScene = new Scene(playlistPane, 300, 100);
+        dialogScene.setFill(Color.TRANSPARENT);
 
-            dialog.setTitle("Create Playlist");
-            dialog.initStyle(StageStyle.UNIFIED);
-            dialog.getIcons().add(IMAGES.CD.get());
-            dialog.setResizable(false);
-            dialog.setScene(dialogScene);
-            dialog.show();
+        dialog.setTitle("Create Playlist");
+        dialog.initStyle(StageStyle.UNIFIED);
+        dialog.getIcons().add(IMAGES.BERRIES.get());
+        dialog.setResizable(false);
+        dialog.setScene(dialogScene);
+        dialog.show();
 
-            themeWindowManager.setDarkModeForWindowFrame(dialog, true);
-            themeWindowManager.setWindowBackdrop(dialog, Win11ThemeWindowManager.Backdrop.ACRYLIC);
-        } catch (Exception e) {
-            LOGGER.severe("Could not create playlist: " + e.getMessage());
+        switch (App.getCurrentOS()) {
+            case WINDOWS_11 -> {
+                Win11ThemeWindowManager themeWindowManager = (Win11ThemeWindowManager) ThemeWindowManagerFactory.create();
+                themeWindowManager.setDarkModeForWindowFrame(dialog, true);
+                themeWindowManager.setWindowBackdrop(dialog, Win11ThemeWindowManager.Backdrop.ACRYLIC);
+            }
         }
     }
 
     @FXML
     private void selectPreview() {
         TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
+
+        if(selectedItem == null) return;
 
         for (Tab tab : previewTabPane.getTabs()) {
             if (tab.getText().equals(selectedItem.getValue())) {
@@ -540,34 +552,31 @@ public class MainController implements  Initializable {
 
     @FXML
     public void repeatCycle() {
-        repeatStatus = (repeatStatus +1) % 3;
+        musicPlayer.cycleRepeatStatus();
+    }
 
-        switch(repeatStatus) {
-            case 0:
+    public void updateRepeatButton() {
+        switch(musicPlayer.getRepeatStatus()) {
+            case OFF:
                 repeatImageView.setImage(IMAGES.REPEAT_UNSELECTED.get());
-                musicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.OFF);
                 break;
-            case 1:
+            case REPEAT_ALL:
                 repeatImageView.setImage(IMAGES.REPEAT_ALL.get());
-                musicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.REPEAT_ALL);
                 break;
-            case 2:
+            case REPEAT_ONE:
                 repeatImageView.setImage(IMAGES.REPEAT_ONE.get());
-                musicPlayer.setRepeatStatus(MusicPlayer.REPEAT_STATUS.OFF);
                 break;
         }
     }
-
     @FXML
     public void shuffleToggle() {
-        shuffleStatus = !shuffleStatus;
+        musicPlayer.toggleShuffleStatus();
+    }
 
-        if(shuffleStatus) {
-            shuffleImageView.setImage(IMAGES.SHUFFLE_SELECTED.get());
-            musicPlayer.setShuffleStatus(MusicPlayer.SHUFFLE_STATUS.SHUFFLE);
-        } else {
-            shuffleImageView.setImage(IMAGES.SHUFFLE_UNSELECTED.get());
-            musicPlayer.setShuffleStatus(MusicPlayer.SHUFFLE_STATUS.OFF);
+    public void updateShuffleButton() {
+        switch(musicPlayer.getShuffleStatus()) {
+            case OFF -> shuffleImageView.setImage(IMAGES.SHUFFLE_UNSELECTED.get());
+            case SHUFFLE -> shuffleImageView.setImage(IMAGES.SHUFFLE_SELECTED.get());
         }
     }
 
@@ -586,8 +595,8 @@ public class MainController implements  Initializable {
     }
 
     public void pickDirectory() {
-        File selectedDirectory = FileUtils.openDirectoryChooser(new Stage(), "Pick a Directory", new File(App.references.getRootDirectoryPath()).getParent());
-        App.references.setRootDirectoryPath(selectedDirectory.getAbsolutePath());
+        File selectedDirectory = FileUtils.openDirectoryChooser(new Stage(), "Pick a Directory", new File(App.getReferences().getRootDirectoryPath()).getParent());
+        App.getReferences().setRootDirectoryPath(selectedDirectory.getAbsolutePath());
         refreshTreeView();
     }
 
