@@ -1,0 +1,27 @@
+:root {
+    --theme-color: #028700;
+}
+
+.layer-zero {
+    -fx-background-color:#121212;
+}
+
+.layer-one {
+    -fx-background-color: #282828;
+}
+
+.layer-two {
+    -fx-background-color: #3f3f3f;
+}
+
+.menu-button > .arrow-button {
+    -fx-padding: 0;
+}
+
+.menu-button > .arrow-button > .arrow {
+    -fx-padding: 0;
+}
+
+.menu-button {
+    -fx-background-color: transparent;
+}
