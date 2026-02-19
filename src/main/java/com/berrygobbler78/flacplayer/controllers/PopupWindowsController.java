@@ -20,7 +20,7 @@ public class PopupWindowsController {
 
     @FXML
     private void enterPlaylistName(){
-        App.references.addPlaylist(new Playlist(playlistNameField.getText()));
+        App.getReferences().addPlaylist(new Playlist(playlistNameField.getText()));
         App.savePlaylists();
         stage.close();
 
